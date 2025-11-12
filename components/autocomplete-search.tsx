@@ -273,8 +273,8 @@ export function AutocompleteSearch({
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10"
-          disabled={disabled} // Disable input when visual search is active
+          className="w-full pl-10 pr-10 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+          disabled={disabled}
           autoFocus={autoFocus}
         />
         {query && (
