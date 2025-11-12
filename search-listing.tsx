@@ -632,6 +632,7 @@ export default function Component() {
             dyidServer: newCredentials.dyidServer,
             locale: newCredentials.locale || "none",
             region: newCredentials.region || "com",
+            currencySymbol: newCredentials.currencySymbol || "$",
             preset: "custom",
           })
         }}
