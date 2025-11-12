@@ -444,7 +444,7 @@ export function WelcomeScreen({
                   <div>
                     <label className="block text-sm font-medium mb-1 text-gray-600">CURRENCY SYMBOL</label>
                     <Input
-                      value={tempCredentials.currencySymbol || "$"}
+                      value={tempCredentials.currencySymbol ?? "$"}
                       onChange={(e) => setTempCredentials({ ...tempCredentials, currencySymbol: e.target.value })}
                       className="text-sm"
                       placeholder="$"
