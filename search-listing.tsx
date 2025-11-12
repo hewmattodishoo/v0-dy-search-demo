@@ -720,7 +720,6 @@ export default function Component() {
                   className="w-96"
                   region={state.region}
                   apiKey={state.apiKey}
-                  disabled={isVisualSearchActive} // Disable autocomplete when visual search is active
                 />
               </div>
             </div>
