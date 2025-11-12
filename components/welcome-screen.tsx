@@ -22,6 +22,7 @@ interface WelcomeScreenProps {
     dyid: string
     locale: string
     region?: ApiRegion
+    currencySymbol?: string
   }
   onCredentialsChange: (credentials: any) => void
   presets: { [key: string]: string }
@@ -439,6 +440,19 @@ export function WelcomeScreen({
                       className="text-sm"
                       placeholder="e.g en_US"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-gray-600">CURRENCY SYMBOL</label>
+                    <Input
+                      value={tempCredentials.currencySymbol || "$"}
+                      onChange={(e) => setTempCredentials({ ...tempCredentials, currencySymbol: e.target.value })}
+                      className="text-sm"
+                      placeholder="$"
+                      maxLength={3}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Symbol displayed before product prices (e.g. $, €, £, ¥)
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1 text-gray-600">DEV MODE</label>
