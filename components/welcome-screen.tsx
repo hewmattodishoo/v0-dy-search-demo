@@ -12,6 +12,7 @@ import { Settings, Plus } from "lucide-react"
 import { VisualSearchUpload } from "./visual-search-upload"
 import { useSearchParams } from "next/navigation"
 import type { ApiRegion } from "../utils/api-urls"
+import { AutocompleteSearch } from "./autocomplete-search"
 
 interface WelcomeScreenProps {
   onSearch: (query: string, mode?: string) => void
@@ -165,14 +166,16 @@ export function WelcomeScreen({
             <div className="relative bg-white rounded-3xl shadow-lg border-gray-200 p-4 border-2 pb-4">
               {/* Search Input on top */}
               <div className="w-full mb-3">
-                <Input
-                  placeholder="Search anything, anyway..."
+                <AutocompleteSearch
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  autoFocus
+                  onChange={setSearchQuery}
+                  onSearch={handleSearch}
+                  placeholder="Search anything, anyway..."
+                  apiKey={credentials.apiKey}
+                  region={credentials.region || "com"}
                   className="border-0 bg-transparent text-lg placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 w-full"
                   style={{ fontSize: "18px" }}
+                  autoFocus
                 />
               </div>
 
@@ -318,14 +321,16 @@ export function WelcomeScreen({
           <div className="bg-white rounded-3xl shadow-lg border border-gray-200 p-4">
             {/* Search Input on top */}
             <div className="w-full mb-3">
-              <Input
-                placeholder="Ask anything"
+              <AutocompleteSearch
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyPress}
-                autoFocus
+                onChange={setSearchQuery}
+                onSearch={handleSearch}
+                placeholder="Ask anything"
+                apiKey={credentials.apiKey}
+                region={credentials.region || "com"}
                 className="border-0 bg-transparent text-base placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 w-full"
                 style={{ fontSize: "16px" }}
+                autoFocus
               />
             </div>
 
