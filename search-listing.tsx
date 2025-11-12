@@ -907,7 +907,10 @@ export default function Component() {
                                 <h4 className="font-medium text-gray-900 text-xs line-clamp-2">
                                   {state.contextProduct.name}
                                 </h4>
-                                <p className="font-semibold text-xs">${state.contextProduct.price}</p>
+                                <p className="font-semibold text-xs">
+                                  {state.currencySymbol}
+                                  {state.contextProduct.price}
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -1091,7 +1094,7 @@ export default function Component() {
                                     image: item.image,
                                   }
                                   const displayPrompt = "Shop The Style"
-                                  const actualPrompt = `Please help me find a total look for this item: ${item.brand || "Unknown Brand"} ${item.name} $${item.price}`
+                                  const actualPrompt = `Please help me find a total look for this item: ${item.brand || "Unknown Brand"} ${item.name} ${state.currencySymbol}${item.price}`
 
                                   const newHistory = [
                                     ...state.chatHistory,
@@ -1210,7 +1213,10 @@ export default function Component() {
                                 window.open(item.url, "_blank")
                               }}
                             >
-                              <span className="font-semibold text-base">${item.price}</span>
+                              <span className="font-semibold text-base">
+                                {state.currencySymbol}
+                                {item.price}
+                              </span>
                             </div>
                           </div>
                         </CardContent>
@@ -1328,7 +1334,7 @@ export default function Component() {
                                       image: item.image,
                                     }
                                     const displayPrompt = "Shop The Style"
-                                    const actualPrompt = `Please help me find a total look for this item: ${item.brand || "Unknown Brand"} ${item.name} $${item.price}`
+                                    const actualPrompt = `Please help me find a total look for this item: ${item.brand || "Unknown Brand"} ${item.name} ${state.currencySymbol}${item.price}`
 
                                     const newHistory = [
                                       ...state.chatHistory,
@@ -1447,7 +1453,10 @@ export default function Component() {
                                   window.open(item.url, "_blank")
                                 }}
                               >
-                                <span className="font-semibold text-base">${item.price}</span>
+                                <span className="font-semibold text-base">
+                                  {state.currencySymbol}
+                                  {item.price}
+                                </span>
                               </div>
                             </div>
                           </CardContent>

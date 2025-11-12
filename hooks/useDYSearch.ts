@@ -149,6 +149,7 @@ export function useDYSearch() {
     dyidServer: "",
     locale: "none",
     region: "com" as ApiRegion,
+    currencySymbol: "$", // Added currency symbol to state with default dollar sign
     queryText: "",
     originalQuery: "",
     spellCheckedQuery: "",

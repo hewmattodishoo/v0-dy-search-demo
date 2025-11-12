@@ -13,6 +13,7 @@ interface SettingsPanelProps {
     apiKey: string
     dyid: string
     dyidServer: string
+    currencySymbol?: string
   }
   onCredentialsChange: (credentials: any) => void
   presets: { [key: string]: string }
@@ -21,7 +22,7 @@ interface SettingsPanelProps {
 export function SettingsPanel({ isOpen, onToggle, credentials, onCredentialsChange, presets }: SettingsPanelProps) {
   return (
     <>
-      <Button variant="outline" onClick={onToggle} className="flex items-center gap-2 border-gray-200">
+      <Button variant="outline" onClick={onToggle} className="flex items-center gap-2 border-gray-200 bg-transparent">
         <Settings className="h-4 w-4" />
         Settings
       </Button>
@@ -42,6 +43,7 @@ export function SettingsPanel({ isOpen, onToggle, credentials, onCredentialsChan
                       apiKey: presets[value] || "",
                       dyid: credentials.dyid,
                       dyidServer: credentials.dyidServer,
+                      currencySymbol: credentials.currencySymbol || "$",
                     })
                   }}
                 >
@@ -82,6 +84,16 @@ export function SettingsPanel({ isOpen, onToggle, credentials, onCredentialsChan
                   value={credentials.dyidServer}
                   onChange={(e) => onCredentialsChange({ ...credentials, dyidServer: e.target.value })}
                   placeholder="Enter DYID Server"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold tracking-wider text-gray-600">CURRENCY SYMBOL</label>
+                <Input
+                  value={credentials.currencySymbol || "$"}
+                  onChange={(e) => onCredentialsChange({ ...credentials, currencySymbol: e.target.value })}
+                  placeholder="$"
+                  maxLength={3}
                 />
               </div>
             </div>
