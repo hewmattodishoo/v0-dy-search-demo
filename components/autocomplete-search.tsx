@@ -12,23 +12,31 @@ interface Suggestion {
 }
 
 interface AutocompleteSearchProps {
+  value?: string
+  onChange?: (value: string) => void
   onSearch: (query: string) => void
   placeholder?: string
   className?: string
+  style?: React.CSSProperties
   apiKey: string
   region?: string
-  disabled?: boolean // Add disabled prop to disable autocomplete when visual search is active
+  disabled?: boolean
+  autoFocus?: boolean
 }
 
 export function AutocompleteSearch({
+  value: externalValue,
+  onChange: externalOnChange,
   onSearch,
   placeholder = "Search products...",
   className,
+  style,
   apiKey,
   region = "com",
-  disabled = false, // Add disabled prop
+  disabled = false,
+  autoFocus = false,
 }: AutocompleteSearchProps) {
-  const [query, setQuery] = useState("")
+  const [internalQuery, setInternalQuery] = useState("")
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
@@ -37,6 +45,10 @@ export function AutocompleteSearch({
   const dropdownRef = useRef<HTMLDivElement>(null)
   const fetchTimeoutRef = useRef<NodeJS.Timeout>()
   const abortControllerRef = useRef<AbortController | null>(null)
+
+  // Use external value if provided, otherwise use internal state
+  const query = externalValue !== undefined ? externalValue : internalQuery
+  const setQuery = externalOnChange || setInternalQuery
 
   // Fetch suggestions via API route
   const fetchSuggestions = useCallback(
@@ -250,7 +262,7 @@ export function AutocompleteSearch({
   )
 
   return (
-    <div ref={dropdownRef} className={cn("relative w-full", className)}>
+    <div ref={dropdownRef} className={cn("relative w-full", className)} style={style}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
@@ -263,6 +275,7 @@ export function AutocompleteSearch({
           placeholder={placeholder}
           className="w-full pl-10 pr-10"
           disabled={disabled} // Disable input when visual search is active
+          autoFocus={autoFocus}
         />
         {query && (
           <button
