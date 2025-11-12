@@ -3,45 +3,44 @@ import { NextResponse } from "next/server"
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { apiKey, searchText, maxResults = 8, region = "com" } = body
+    const { apiKey, searchText, maxResults = 10, region = "com" } = body
 
-    console.log("=== AUTOCOMPLETE API ROUTE ===")
-    console.log("Region:", region)
-    console.log("Search Text:", searchText || "(empty)")
-    console.log("Max Results:", maxResults)
+    console.log("[v0] === AUTOCOMPLETE API ROUTE ===")
+    console.log("[v0] Region:", region)
+    console.log("[v0] Search Text:", searchText || "(empty)")
+    console.log("[v0] Max Results:", maxResults)
 
     // Use direct.dy-api for client-side keys
     const baseUrl = region === "eu" ? "https://direct.dy-api.eu" : "https://direct.dy-api.com"
     const apiEndpoint = `${baseUrl}/v2/serve/user/suggest`
 
-    // Build the exact payload structure
     const payload = {
       user: {
-        active_consent_accepted: false,
-        dyid: "",
-        dyid_server: "",
+        active_consent_accepted: true,
+        dyid: "1",
+        dyid_server: "1",
       },
       session: {
-        dy: "",
+        dy: "1",
       },
       query: {
-        text: searchText,
         suggestions: [
           {
             type: "querySuggestions",
             maxResults: maxResults,
           },
         ],
+        text: searchText,
       },
       context: {
         page: {
-          locale: "en_us",
+          locale: "en_US",
         },
       },
     }
 
-    console.log("Request URL:", apiEndpoint)
-    console.log("Payload:", JSON.stringify(payload, null, 2))
+    console.log("[v0] Request URL:", apiEndpoint)
+    console.log("[v0] Payload:", JSON.stringify(payload, null, 2))
 
     const response = await fetch(apiEndpoint, {
       method: "POST",
@@ -52,11 +51,11 @@ export async function POST(request: Request) {
       body: JSON.stringify(payload),
     })
 
-    console.log("DY API Response Status:", response.status)
+    console.log("[v0] DY API Response Status:", response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("DY API Error:", errorText)
+      console.error("[v0] DY API Error:", errorText)
       return NextResponse.json(
         {
           success: false,
@@ -68,7 +67,7 @@ export async function POST(request: Request) {
     }
 
     const data = await response.json()
-    console.log("DY API Response:", JSON.stringify(data, null, 2))
+    console.log("[v0] DY API Response:", JSON.stringify(data, null, 2))
 
     // Extract suggestions from variations[0].payload.data.suggestions.querySuggestions
     let suggestions: { text: string }[] = []
@@ -79,12 +78,12 @@ export async function POST(request: Request) {
       suggestions = querySuggestions.map((s: any) => ({
         text: s.term || s.text || s,
       }))
-      console.log("✅ Extracted", suggestions.length, "suggestions:", suggestions)
+      console.log("[v0] ✅ Extracted", suggestions.length, "suggestions:", suggestions)
     } else {
-      console.log("❌ No suggestions found in response structure")
-      console.log("Response keys:", Object.keys(data))
+      console.log("[v0] ❌ No suggestions found in response structure")
+      console.log("[v0] Response keys:", Object.keys(data))
       if (data.variations) {
-        console.log("Variations[0] keys:", Object.keys(data.variations[0] || {}))
+        console.log("[v0] Variations[0] keys:", Object.keys(data.variations[0] || {}))
       }
     }
 
@@ -95,7 +94,7 @@ export async function POST(request: Request) {
       },
     })
   } catch (error) {
-    console.error("Autocomplete API route error:", error)
+    console.error("[v0] Autocomplete API route error:", error)
     return NextResponse.json(
       {
         success: false,

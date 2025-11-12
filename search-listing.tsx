@@ -35,6 +35,8 @@ export default function Component() {
   // Add ref to prevent multiple simultaneous load more operations
   const loadMoreInProgressRef = useRef(false)
 
+  const [isVisualSearchActive, setIsVisualSearchActive] = useState(false)
+
   const {
     state,
     updateState,
@@ -315,6 +317,7 @@ export default function Component() {
 
   const handleVisualSearch = (base64: string) => {
     setSearchQuery("")
+    setIsVisualSearchActive(true) // Set visual search as active
     performVisualSearch(base64)
   }
 
@@ -323,6 +326,7 @@ export default function Component() {
       visualSearchImage: null,
       searchType: "text",
     })
+    setIsVisualSearchActive(false) // Reset visual search state
   }
 
   const handleBackToWelcome = () => {
@@ -351,6 +355,7 @@ export default function Component() {
       shopTheStyleDisplay: undefined,
     })
     setSearchQuery("")
+    setIsVisualSearchActive(false) // Reset visual search state
     router.replace(window.location.pathname, { scroll: false })
   }
 
@@ -677,10 +682,15 @@ export default function Component() {
             </Button>
 
             <div className="relative flex items-center gap-2">
-              <VisualSearchUpload onImageUpload={handleVisualSearch} />
+              <VisualSearchUpload
+                onImageUpload={(base64) => {
+                  handleVisualSearch(base64)
+                }}
+              />
               <div className="relative flex items-center">
                 <AutocompleteSearch
                   onSearch={(searchTerm) => {
+                    setIsVisualSearchActive(false) // Reset visual search state when doing text search
                     if (containsAITriggerWords(searchTerm)) {
                       updateState({
                         queryText: searchTerm,
@@ -710,6 +720,7 @@ export default function Component() {
                   className="w-96"
                   region={state.region}
                   apiKey={state.apiKey}
+                  disabled={isVisualSearchActive} // Disable autocomplete when visual search is active
                 />
               </div>
             </div>

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Search, X, TrendingUp } from "lucide-react"
+import { Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -17,6 +17,7 @@ interface AutocompleteSearchProps {
   className?: string
   apiKey: string
   region?: string
+  disabled?: boolean // Add disabled prop to disable autocomplete when visual search is active
 }
 
 export function AutocompleteSearch({
@@ -25,6 +26,7 @@ export function AutocompleteSearch({
   className,
   apiKey,
   region = "com",
+  disabled = false, // Add disabled prop
 }: AutocompleteSearchProps) {
   const [query, setQuery] = useState("")
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -39,8 +41,8 @@ export function AutocompleteSearch({
   // Fetch suggestions via API route
   const fetchSuggestions = useCallback(
     async (searchText: string) => {
-      if (!apiKey) {
-        console.log("No API key provided")
+      if (!apiKey || disabled) {
+        console.log("[v0] Autocomplete disabled or no API key")
         return
       }
 
@@ -54,8 +56,8 @@ export function AutocompleteSearch({
       try {
         setIsLoading(true)
 
-        console.log("=== FETCHING SUGGESTIONS ===")
-        console.log("Search text:", searchText || "(empty)")
+        console.log("[v0] === FETCHING SUGGESTIONS ===")
+        console.log("[v0] Search text:", searchText || "(empty)")
 
         const response = await fetch("/api/autocomplete", {
           method: "POST",
@@ -65,68 +67,60 @@ export function AutocompleteSearch({
           body: JSON.stringify({
             apiKey,
             searchText,
-            maxResults: 8,
+            maxResults: 10,
             region,
           }),
           signal: abortControllerRef.current.signal,
         })
 
         if (!response.ok) {
-          console.error("Autocomplete API error:", response.status)
+          console.error("[v0] Autocomplete API error:", response.status)
           setSuggestions([])
-          setShowDropdown(false)
+          setShowDropdown(true)
           return
         }
 
         const data = await response.json()
-        console.log("=== API RESPONSE ===")
-        console.log(JSON.stringify(data, null, 2))
+        console.log("[v0] === API RESPONSE ===")
+        console.log("[v0]", JSON.stringify(data, null, 2))
 
         const newSuggestions = data?.data?.suggestions || []
 
-        console.log("=== EXTRACTED SUGGESTIONS ===")
-        console.log("Count:", newSuggestions.length)
-        console.log("Suggestions:", newSuggestions)
+        console.log("[v0] === EXTRACTED SUGGESTIONS ===")
+        console.log("[v0] Count:", newSuggestions.length)
+        console.log("[v0] Suggestions:", newSuggestions)
 
         setSuggestions(newSuggestions)
-
-        if (newSuggestions.length > 0) {
-          console.log("✅ Setting showDropdown to TRUE")
-          setShowDropdown(true)
-        } else {
-          console.log("❌ No suggestions - showDropdown stays FALSE")
-          setShowDropdown(false)
-        }
+        setShowDropdown(true)
       } catch (error) {
         if (error instanceof Error && error.name !== "AbortError") {
-          console.error("Autocomplete fetch error:", error)
+          console.error("[v0] Autocomplete fetch error:", error)
         }
         setSuggestions([])
-        setShowDropdown(false)
+        setShowDropdown(true)
       } finally {
         setIsLoading(false)
       }
     },
-    [apiKey, region],
+    [apiKey, region, disabled],
   )
 
-  // Handle input change with debouncing
   useEffect(() => {
     if (fetchTimeoutRef.current) {
       clearTimeout(fetchTimeoutRef.current)
     }
 
-    // Only fetch if 3+ characters
-    if (query.length >= 3) {
+    if (disabled) {
+      setSuggestions([])
+      setShowDropdown(false)
+      return
+    }
+
+    if (query.length >= 2) {
       fetchTimeoutRef.current = setTimeout(() => {
         fetchSuggestions(query)
       }, 300)
-    } else if (query.length === 0) {
-      // On empty, clear immediately
-      setSuggestions([])
-      setShowDropdown(false)
     } else {
-      // For 1-2 characters, clear suggestions
       setSuggestions([])
       setShowDropdown(false)
     }
@@ -136,13 +130,15 @@ export function AutocompleteSearch({
         clearTimeout(fetchTimeoutRef.current)
       }
     }
-  }, [query, fetchSuggestions])
+  }, [query, fetchSuggestions, disabled])
 
   // Handle input focus - fetch initial suggestions
   const handleFocus = () => {
+    if (disabled) return // Don't show dropdown if disabled
+
     if (query.length === 0) {
       fetchSuggestions("")
-    } else if (query.length >= 3 && suggestions.length > 0) {
+    } else if (query.length >= 2 && suggestions.length > 0) {
       setShowDropdown(true)
     }
   }
@@ -209,7 +205,7 @@ export function AutocompleteSearch({
 
   const handleSuggestionClick = (text: string) => {
     setQuery(text)
-    onSearch(text)
+    onSearch(text) // Immediately perform the search
     setShowDropdown(false)
     setSelectedIndex(-1)
   }
@@ -224,7 +220,7 @@ export function AutocompleteSearch({
 
   // Highlight matching text
   const highlightMatch = (text: string, searchQuery: string) => {
-    if (!searchQuery || searchQuery.length < 3) {
+    if (!searchQuery || searchQuery.length < 2) {
       return <span className="text-gray-700">{text}</span>
     }
 
@@ -244,7 +240,14 @@ export function AutocompleteSearch({
     )
   }
 
-  console.log("🎨 RENDER - showDropdown:", showDropdown, "suggestions.length:", suggestions.length)
+  console.log(
+    "[v0] 🎨 RENDER - showDropdown:",
+    showDropdown,
+    "suggestions.length:",
+    suggestions.length,
+    "disabled:",
+    disabled,
+  )
 
   return (
     <div ref={dropdownRef} className={cn("relative w-full", className)}>
@@ -259,6 +262,7 @@ export function AutocompleteSearch({
           onFocus={handleFocus}
           placeholder={placeholder}
           className="w-full pl-10 pr-10"
+          disabled={disabled} // Disable input when visual search is active
         />
         {query && (
           <button
@@ -270,34 +274,28 @@ export function AutocompleteSearch({
         )}
       </div>
 
-      {showDropdown && suggestions.length > 0 && (
+      {!disabled && showDropdown && query.length >= 2 && (
         <div className="absolute z-[9999] mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
           <div className="max-h-[300px] overflow-y-auto py-1">
-            {query.length === 0 && (
-              <div className="px-4 py-2 text-xs font-semibold text-gray-500 flex items-center gap-2">
-                <TrendingUp className="h-3.5 w-3.5" />
-                Trending
-              </div>
-            )}
-            {suggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                onClick={() => handleSuggestionClick(suggestion.text)}
-                onMouseEnter={() => setSelectedIndex(index)}
-                className={cn(
-                  "flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors",
-                  "hover:bg-gray-50",
-                  selectedIndex === index && "bg-gray-100",
-                )}
-              >
-                {query.length === 0 ? (
-                  <TrendingUp className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                ) : (
+            {suggestions.length === 0 ? (
+              <div className="px-4 py-3 text-sm text-gray-400 text-center">autocomplete suggestions</div>
+            ) : (
+              suggestions.slice(0, 10).map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSuggestionClick(suggestion.text)}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  className={cn(
+                    "flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors",
+                    "hover:bg-gray-50",
+                    selectedIndex === index && "bg-gray-100",
+                  )}
+                >
                   <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                )}
-                {highlightMatch(suggestion.text, query)}
-              </button>
-            ))}
+                  {highlightMatch(suggestion.text, query)}
+                </button>
+              ))
+            )}
           </div>
         </div>
       )}
