@@ -13,6 +13,7 @@ import { sendEngagement } from "./utils/engagement"
 import { FacetSidebar } from "./components/facet-sidebar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { AutocompleteSearch } from "./components/autocomplete-search"
+import { VisualSearchUpload } from "./components/visual-search-upload" // Assuming this is the component for visual search upload
 
 export default function Component() {
   const router = useRouter()
@@ -675,7 +676,8 @@ export default function Component() {
               <span className="text-sm font-medium">Return</span>
             </Button>
 
-            <div className="relative flex items-center">
+            <div className="relative flex items-center gap-2">
+              <VisualSearchUpload onImageUpload={handleVisualSearch} />
               <div className="relative flex items-center">
                 <AutocompleteSearch
                   onSearch={(searchTerm) => {
@@ -705,7 +707,7 @@ export default function Component() {
                     }
                   }}
                   placeholder="Search products..."
-                  className="w-64"
+                  className="w-96"
                   region={state.region}
                   apiKey={state.apiKey}
                 />
