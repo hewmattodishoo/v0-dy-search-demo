@@ -14,6 +14,7 @@ import { FacetSidebar } from "./components/facet-sidebar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { AutocompleteSearch } from "./components/autocomplete-search"
 import { VisualSearchUpload } from "./components/visual-search-upload"
+import { TrafficGeneratorDialog } from "./components/traffic-generator-dialog"
 
 export default function Component() {
   const router = useRouter()
@@ -1483,6 +1484,7 @@ export default function Component() {
   )
 }
 </div>
+      </div>
 
 {
   state.aiMode && (
@@ -1560,17 +1562,12 @@ export default function Component() {
     </div>
   )
 }
-</div>
-
-      <TrafficGeneratorDialog
-        open=
-{
-  showTrafficGenerator
-}
-onOpenChange = { setShowTrafficGenerator }
-apiKey={state.apiKey}
-region={state.region}
-      />
+;<TrafficGeneratorDialog
+  open={showTrafficGenerator}
+  onOpenChange={setShowTrafficGenerator}
+  apiKey={state.apiKey}
+  region={state.region}
+/>
 </>
   )
 }
