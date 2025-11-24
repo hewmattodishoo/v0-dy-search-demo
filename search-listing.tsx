@@ -14,7 +14,6 @@ import { FacetSidebar } from "./components/facet-sidebar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { AutocompleteSearch } from "./components/autocomplete-search"
 import { VisualSearchUpload } from "./components/visual-search-upload"
-import { TrafficGeneratorDialog } from "./components/traffic-generator-dialog"
 
 export default function Component() {
   const router = useRouter()
@@ -1283,6 +1282,8 @@ export default function Component() {
             </div>
   )
 }
+</div>
+      </div>
 
 {
   state.aiMode && !state.loading && (
@@ -1484,90 +1485,5 @@ export default function Component() {
   )
 }
 </div>
-      </div>
-
-{
-  state.aiMode && (
-    <div className="fixed bottom-0 left-0 right-0 w-full bg-transparent border-t-0 z-30">
-      <div className="w-full rounded-t-[2rem] shadow-lg border-gray-200 p-6 border-2 bg-slate-50 py-3.5">
-        <div className="max-w-3xl mx-auto">
-          <div className="relative bg-white rounded-3xl shadow-sm border border-gray-200 p-4 py-2.5">
-            <div className="w-full mb-3">
-              <input
-                type="text"
-                placeholder="Ask a follow up question..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && searchQuery.trim()) {
-                    updateState({ contextProduct: null, shopTheStyleDisplay: undefined })
-                    performDirectAISearch(searchQuery.trim())
-                    setSearchQuery("")
-                  }
-                }}
-                className="w-full text-base bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 outline-none placeholder:text-gray-400"
-                style={{ fontSize: "16px" }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="flex-shrink-0"
-                >
-                  <g clipPath="url(#clip0_4082_5186_bottom)">
-                    <path
-                      d="M11.6757 9.81054C8.73958 9.81054 6.35089 7.42177 6.35089 4.48562C6.35089 2.62899 7.30664 0.992133 8.75134 0.0388074C8.50309 0.0155936 8.25193 0.00238037 7.99762 0.00238037C3.58066 0.00238037 0 3.58304 0 8C0 12.417 3.58066 16 7.99762 16C7.74331 16 7.49215 15.987 7.24391 15.9638C8.68861 15.0104 9.64436 13.3736 9.64436 11.517C9.64436 8.58087 7.25567 6.19209 4.3195 6.19209C2.46287 6.19209 0.826018 7.14784 -0.127308 8.59254C-0.150522 8.34429 -0.163735 8.09313 -0.163735 7.83882C-0.163735 3.42186 3.41692 -0.158813 7.8339 -0.158813C12.2509 -0.158813 15.8315 3.42186 15.8315 7.83882C15.8315 8.17203 15.8142 8.50106 15.7809 8.82591C13.9699 8.97903 12.5605 10.2163 12.1968 11.8531C11.9928 10.9421 11.2373 10.2223 10.2992 10.0359C10.6629 9.30544 10.8669 8.47862 10.8669 7.59926C10.8669 4.66311 8.47817 2.27432 5.54202 2.27432C4.66266 2.27432 3.83584 2.47836 3.10537 2.84204C2.91898 1.90389 2.19909 1.14838 1.28811 0.944342C2.92496 0.390675 4.70316 0.0838928 6.5598 0.0838928C11.8128 0.0838928 16.0762 4.34731 16.0762 9.60028C16.0762 11.457 15.5226 13.2352 14.969 14.8721Z"
-                      fill="currentColor"
-                    />
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_4082_5186_bottom">
-                      <rect width="16" height="16" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-                <span className="text-xs text-gray-500">Shopping Muse</span>
-              </div>
-
-              <Button
-                size="sm"
-                onClick={handleAISearch}
-                disabled={!searchQuery.trim() || state.loading}
-                className="rounded-full bg-black text-white hover:bg-gray-800 px-4 h-8"
-              >
-                {state.loading ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M7.99999 1.33334V14.6667M7.99999 14.6667L14.6667 8.00001M7.99999 14.6667L1.33333 8.00001"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-;<TrafficGeneratorDialog
-  open={showTrafficGenerator}
-  onOpenChange={setShowTrafficGenerator}
-  apiKey={state.apiKey}
-  region={state.region}
-/>
-</>
   )
 }
