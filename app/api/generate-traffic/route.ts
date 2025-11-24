@@ -1,102 +1,106 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 
-export const runtime = "edge"
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { queries, apiKey, region = "com" } = body
+    const { apiKey, queries, count = 50, region = "com" } = body
 
     if (!apiKey) {
-      return NextResponse.json({ error: "API key is required" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "API key is required" }, { status: 400 })
     }
 
-    if (!queries || !Array.isArray(queries) || queries.length === 0) {
-      return NextResponse.json({ error: "Queries array is required" }, { status: 400 })
+    if (!queries || queries.length === 0) {
+      return NextResponse.json({ success: false, error: "At least one query is required" }, { status: 400 })
     }
 
-    const tld = region === "eu" ? "eu" : "com"
-    const suggestUrl = `https://dy-api.${tld}/v2/serve/user/suggest`
+    const baseUrl = region === "eu" ? "https://direct.dy-api.eu" : "https://direct.dy-api.com"
+    const apiEndpoint = `${baseUrl}/v2/serve/user/suggest`
 
     const results = {
-      total: 0,
+      total: queries.length * count,
       successful: 0,
       failed: 0,
-      details: [] as any[],
+      queries: [] as any[],
     }
 
-    // Process queries with rate limiting
-    for (const queryItem of queries) {
-      const { term, count } = queryItem
+    // Process each query
+    for (const query of queries) {
+      const queryResults = {
+        query,
+        successful: 0,
+        failed: 0,
+      }
 
+      // Make 'count' requests for this query
       for (let i = 0; i < count; i++) {
         try {
-          const response = await fetch(suggestUrl, {
+          const payload = {
+            user: {
+              active_consent_accepted: true,
+              dyid: `traffic-gen-${Date.now()}-${i}`,
+              dyid_server: `traffic-gen-${Date.now()}-${i}`,
+            },
+            session: {
+              dy: `session-${Date.now()}-${i}`,
+            },
+            query: {
+              suggestions: [
+                {
+                  type: "querySuggestions",
+                  maxResults: 10,
+                },
+              ],
+              text: query,
+            },
+            context: {
+              page: {
+                locale: "en_US",
+              },
+            },
+          }
+
+          const response = await fetch(apiEndpoint, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               "DY-API-Key": apiKey,
             },
-            body: JSON.stringify({
-              selector: {
-                names: ["dy.search"],
-              },
-              user: {},
-              context: {
-                page: {
-                  type: "PRODUCT_LISTING",
-                  data: [],
-                  locale: "en_US",
-                },
-                device: {
-                  ip: "127.0.0.1",
-                },
-              },
-              options: {
-                queries: [
-                  {
-                    name: "dy.search",
-                    params: {
-                      searchString: term,
-                    },
-                  },
-                ],
-              },
-            }),
+            body: JSON.stringify(payload),
           })
 
-          results.total++
-
           if (response.ok) {
+            queryResults.successful++
             results.successful++
           } else {
+            queryResults.failed++
             results.failed++
-            results.details.push({
-              term,
-              iteration: i + 1,
-              error: `HTTP ${response.status}`,
-            })
           }
 
           // Small delay to avoid overwhelming the API
           if (i < count - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 100))
+            await new Promise((resolve) => setTimeout(resolve, 50))
           }
-        } catch (error: any) {
-          results.total++
+        } catch (error) {
+          queryResults.failed++
           results.failed++
-          results.details.push({
-            term,
-            iteration: i + 1,
-            error: error.message,
-          })
         }
       }
+
+      results.queries.push(queryResults)
     }
 
-    return NextResponse.json(results)
-  } catch (error: any) {
-    console.error("Traffic generation error:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({
+      success: true,
+      data: results,
+    })
+  } catch (error) {
+    console.error("[v0] Traffic generation error:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

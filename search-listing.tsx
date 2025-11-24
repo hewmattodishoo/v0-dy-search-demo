@@ -13,7 +13,8 @@ import { sendEngagement } from "./utils/engagement"
 import { FacetSidebar } from "./components/facet-sidebar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { AutocompleteSearch } from "./components/autocomplete-search"
-import { VisualSearchUpload } from "./components/visual-search-upload"
+import { VisualSearchUpload } from "./components/visual-search-upload" // Assuming this is the component for visual search upload
+import { TrafficGeneratorDialog } from "@/components/traffic-generator-dialog" // Import TrafficGeneratorDialog
 
 export default function Component() {
   const router = useRouter()
@@ -31,12 +32,13 @@ export default function Component() {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const horizontalContainerRef = useRef<HTMLDivElement | null>(null)
   const [scrollProgress, setScrollProgress] = useState(0)
-  const [showTrafficGenerator, setShowTrafficGenerator] = useState(false)
 
   // Add ref to prevent multiple simultaneous load more operations
   const loadMoreInProgressRef = useRef(false)
 
   const [isVisualSearchActive, setIsVisualSearchActive] = useState(false)
+
+  const [trafficGenOpen, setTrafficGenOpen] = useState(false)
 
   const {
     state,
@@ -669,7 +671,7 @@ export default function Component() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-white">
       {/* Header - Enhanced for AI Mode */}
       <div className="sticky top-0 z-20 border-b-2 rounded-b-3xl bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between py-6 lg:px-2.5">
@@ -764,10 +766,9 @@ export default function Component() {
 
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8 hover:bg-gray-100"
-                onClick={() => setShowTrafficGenerator(true)}
-                title="Traffic Generator"
+                className="h-8 w-8 p-0 hover:bg-gray-100"
+                onClick={() => setTrafficGenOpen(true)}
+                title="Generate Autosuggest Traffic"
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -775,7 +776,7 @@ export default function Component() {
           )}
 
           {!state.aiMode && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {state.searchType === "text" ? (
                 <span className="text-sm font-medium text-gray-700">
                   Results for "{state.spellCheckedQuery || state.queryText}"
@@ -815,10 +816,9 @@ export default function Component() {
 
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8 hover:bg-gray-100"
-                onClick={() => setShowTrafficGenerator(true)}
-                title="Traffic Generator"
+                className="h-8 w-8 p-0 hover:bg-gray-100"
+                onClick={() => setTrafficGenOpen(true)}
+                title="Generate Autosuggest Traffic"
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -826,6 +826,13 @@ export default function Component() {
           )}
         </div>
       </div>
+
+      <TrafficGeneratorDialog
+        open={trafficGenOpen}
+        onOpenChange={setTrafficGenOpen}
+        apiKey={state.apiKey}
+        region={state.region}
+      />
 
       {/* Main Content Area */}
       <div className="w-full">
@@ -1151,7 +1158,10 @@ export default function Component() {
                                     d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
                                     fill="currentColor"
                                   />
-                                  <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor" />
+                                  <path
+                                    d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z"
+                                    fill="currentColor"
+                                  />
                                 </svg>
                                 Shop the style
                               </Button>
@@ -1182,300 +1192,388 @@ export default function Component() {
                               </Button>
                             </div>
                           </div>
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="absolute top-2 right-2 p-1 bg-white bg-opacity-80 hover:bg-opacity-100 h-auto w-auto"
+                            onClick={() => toggleFavorite(item.id)}
+                          >
+                            <Heart
+                              className={`h-3 w-3 ${favorites.includes(item.id) ? "fill-red-500 text-red-500" : "text-gray-600"}`}
+                            />
+                          </Button>
                         </div>
 
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="absolute top-2 right-2 p-1 bg-white bg-opacity-80 hover:bg-opacity-100 h-auto w-auto"
-                          onClick={() => toggleFavorite(item.id)}
-                        >
-                          <Heart
-                            className={`h-3 w-3 ${favorites.includes(item.id) ? "fill-red-500 text-red-500" : "text-gray-600"}`}
-                          />
-                        </Button>
-                      </Card>
-\
-                      <CardContent className={\`p-3 ${viewMode === "list" ? "flex-1\" : "\"}`}>\
-                        <div className="space-y-2\">\
-                          <div>\
-                            <h3\
-                              className=\"font-medium text-gray-900 line-clamp-2 text-sm cursor-pointer hover:underline"\
-                              onClick={() => {\
-                                sendEngagement(\
-                                  item.slotId,\
-                                  state.dyid,\
-                                  state.cookies.dyid_server,\
-                                  state.cookies.dyjsession,\
+                        <CardContent className={`p-3 ${viewMode === "list" ? "flex-1" : ""}`}>
+                          <div className="space-y-2">
+                            <div>
+                              <h3
+                                className="font-medium text-gray-900 line-clamp-2 text-sm cursor-pointer hover:underline"
+                                onClick={() => {
+                                  sendEngagement(
+                                    item.slotId,
+                                    state.dyid,
+                                    state.cookies.dyid_server,
+                                    state.cookies.dyjsession,
+                                    state.apiKey,
+                                    addDebugLog,
+                                    state.region,
+                                  )
+                                  window.open(item.url, "_blank")
+                                }}
+                              >
+                                {item.name}
+                              </h3>
+                            </div>
+
+                            <div
+                              className="flex items-center space-x-2 cursor-pointer"
+                              onClick={() => {
+                                sendEngagement(
+                                  item.slotId,
+                                  state.dyid,
+                                  state.cookies.dyid_server,
+                                  state.cookies.dyjsession,
                                   state.apiKey,
-                                  addDebugLog,\
+                                  addDebugLog,
                                   state.region,
-                                )\
-                                window.open(item.url, \"_blank\")\
-                              }}\
-                            >\
-                              {item.name}\
-                            </h3>\
-                          </div>
-\
-                          <div\
-                            className="flex items-center space-x-2 cursor-pointer"\
-                            onClick={() => {\
-                              sendEngagement(
-                                item.slotId,
-                                state.dyid,
-                                state.cookies.dyid_server,
-                                state.cookies.dyjsession,
-                                state.apiKey,
-                                addDebugLog,
-                                state.region,
-                              )
-                              window.open(item.url, "_blank")
-                            }}
-                          >
-                            <span className="font-semibold text-base">
-                              {state.currencySymbol}
-                              {item.price}
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-
-              {state.isLoadingMore && fashionItems.length > 0 && (
-                <div className="mt-8 text-center py-4">
-                  <div className="flex flex-col items-center gap-2">
-                    <LoadingSpinner size="md" />
-                    <p className="text-gray-500 text-sm">Loading more results...</p>
-                  </div>
-                </div>
-              )}
-
-              {fashionItems.length > 0 &&
-                state.searchType === "text" &&
-                !state.isLoadingMore &&
-                !state.loading &&
-                state.page < Math.ceil(state.total / state.itemsPerPage) && (
-                  <div ref={loadMoreRef} className="mt-8 text-center py-4">
-                    <p className="text-xs text-gray-400">Scroll to load more...</p>
-                  </div>
-                )}
-
-              {fashionItems.length > 0 &&
-                state.searchType === "text" &&
-                state.page >= Math.ceil(state.total / state.itemsPerPage) && (
-                  <div className="mt-8 text-center">
-                    <p className="text-sm text-gray-500">You've reached the end of the results</p>
-                  </div>
-                )}
-
-              {fashionItems.length > 0 && state.searchType === "visual" && <div className="mt-8 text-center"></div>}
-            </div>
-  </div>
-        )
-}
-</div>
-
-{
-  state.aiMode && !state.loading && (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-2.5 py-4 pb-32">
-      {fashionItemsWithWidgets.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="flex flex-col items-center gap-4">
-            <svg className="w-12 h-12 text-gray-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor" />
-              <path d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z" fill="currentColor" />
-              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor" />
-            </svg>
-            <p className="text-gray-500 text-sm">Let's try a different approach</p>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {fashionItemsWithWidgets.map((widget, widgetIndex) => (
-            <div key={widgetIndex} className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">{widget.widgetTitle}</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                {widget.items.map((item: any) => (
-                  <Card
-                    key={item.id}
-                    className="group overflow-hidden border-0 hover:shadow-md transition-all duration-300"
-                    style={{ borderRadius: 0 }}
-                  >
-                    <div className="relative">
-                      <div
-                        className="w-full h-[340px] overflow-hidden rounded-none"
-                        onClick={() => {
-                          sendEngagement(
-                            item.slotId,
-                            state.dyid,
-                            state.cookies.dyid_server,
-                            state.cookies.dyjsession,
-                            state.apiKey,
-                            addDebugLog,
-                            state.region,
-                          )
-                          window.open(item.url, "_blank")
-                        }}
-                      >
-                        <Image
-                          src={item.image || "/placeholder.svg"}
-                          alt={item.name}
-                          width={250}
-                          height={340}
-                          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 cursor-pointer"
-                        />
-                      </div>
-
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <div className="flex flex-col space-y-1">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="bg-white text-black hover:bg-gray-100 text-xs px-2 py-1 h-auto"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              const contextProduct = {
-                                name: item.name,
-                                brand: item.brand || "Unknown Brand",
-                                price: item.price,
-                                image: item.image,
-                              }
-                              const displayPrompt = "Shop The Style"
-                              const actualPrompt = `Please help me find a total look for this item: ${item.brand || "Unknown Brand"} ${item.name} ${state.currencySymbol}${item.price}`
-
-                              const newHistory = [
-                                ...state.chatHistory,
-                                { type: "user", message: actualPrompt, timestamp: new Date() },
-                              ]
-
-                              updateState({
-                                queryText: actualPrompt,
-                                originalQuery: actualPrompt,
-                                page: 1,
-                                searchType: "ai",
-                                aiMode: true,
-                                hasSearched: true,
-                                chatHistory: newHistory,
-                                contextProduct: contextProduct,
-                                shopTheStyleDisplay: displayPrompt,
-                              })
-                              performDirectAISearch(actualPrompt)
-                            }}
-                          >
-                            <svg
-                              className="h-3 w-3 mr-1"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
+                                )
+                                window.open(item.url, "_blank")
+                              }}
                             >
-                              <path
-                                d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                                fill="currentColor"
-                              />
-                              <path
-                                d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
-                                fill="currentColor"
-                              />
-                              <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor" />
-                            </svg>
-                            Shop the style
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="bg-white text-black hover:bg-gray-100 text-xs px-2 py-1 h-auto"
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              try {
-                                const response = await fetch(item.image)
-                                const blob = await response.blob()
-                                const reader = new FileReader()
-                                reader.onloadend = () => {
-                                  const base64 = reader.result?.toString().split(",")[1]
-                                  if (base64) {
-                                    handleVisualSearch(base64)
-                                  }
-                                }
-                                reader.readAsDataURL(blob)
-                              } catch (error) {
-                                console.error("Error converting image to base64:", error)
-                              }
-                            }}
-                          >
-                            <Search className="h-3 w-3 mr-1" />
-                            Similar style
-                          </Button>
-                        </div>
-                      </div>
+                              <span className="font-semibold text-base">
+                                {state.currencySymbol}
+                                {item.price}
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
 
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="absolute top-2 right-2 p-1 bg-white bg-opacity-80 hover:bg-opacity-100 h-auto w-auto"
-                        onClick={() => toggleFavorite(Number(item.id.split("-")[1]))}
-                      >
-                        <Heart
-                          className={`h-3 w-3 ${favorites.includes(Number(item.id.split("-")[1])) ? "fill-red-500 text-red-500" : "text-gray-600"}`}
-                        />
-                      </Button>
+                {state.isLoadingMore && fashionItems.length > 0 && (
+                  <div className="mt-8 text-center py-4">
+                    <div className="flex flex-col items-center gap-2">
+                      <LoadingSpinner size="md" />
+                      <p className="text-gray-500 text-sm">Loading more results...</p>
                     </div>
+                  </div>
+                )}
 
-                    <CardContent className="p-3">
-                      <div className="space-y-2">
-                        <div>
-                          <h3
-                            className="font-medium text-gray-900 line-clamp-2 text-sm cursor-pointer hover:underline"
-                            onClick={() => {
-                              sendEngagement(
-                                item.slotId,
-                                state.dyid,
-                                state.cookies.dyid_server,
-                                state.cookies.dyjsession,
-                                state.apiKey,
-                                addDebugLog,
-                                state.region,
-                              )
-                              window.open(item.url, "_blank")
-                            }}
-                          >
-                            {item.name}
-                          </h3>
-                        </div>
+                {fashionItems.length > 0 &&
+                  state.searchType === "text" &&
+                  !state.isLoadingMore &&
+                  !state.loading &&
+                  state.page < Math.ceil(state.total / state.itemsPerPage) && (
+                    <div ref={loadMoreRef} className="mt-8 text-center py-4">
+                      <p className="text-xs text-gray-400">Scroll to load more...</p>
+                    </div>
+                  )}
 
-                        <div
-                          className="flex items-center space-x-2 cursor-pointer"
-                          onClick={() => {
-                            sendEngagement(
-                              item.slotId,
-                              state.dyid,
-                              state.cookies.dyid_server,
-                              state.cookies.dyjsession,
-                              state.apiKey,
-                              addDebugLog,
-                              state.region,
-                            )
-                            window.open(item.url, "_blank")
-                          }}
-                        >
-                          <span className="font-semibold text-base">
-                            {state.currencySymbol}
-                            {item.price}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {fashionItems.length > 0 &&
+                  state.searchType === "text" &&
+                  state.page >= Math.ceil(state.total / state.itemsPerPage) && (
+                    <div className="mt-8 text-center">
+                      <p className="text-sm text-gray-500">You've reached the end of the results</p>
+                    </div>
+                  )}
+
+                {fashionItems.length > 0 && state.searchType === "visual" && <div className="mt-8 text-center"></div>}
               </div>
             </div>
-          ))}
+          </div>
+        )}
+
+        {state.aiMode && !state.loading && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-2.5 py-4 pb-32">
+            {fashionItemsWithWidgets.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="flex flex-col items-center gap-4">
+                  <svg
+                    className="w-12 h-12 text-gray-300"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                      fill="currentColor"
+                    />
+                    <path
+                      d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
+                      fill="currentColor"
+                    />
+                    <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor" />
+                  </svg>
+                  <p className="text-gray-500 text-sm">Let's try a different approach</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {fashionItemsWithWidgets.map((widget, widgetIndex) => (
+                  <div key={widgetIndex} className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">{widget.widgetTitle}</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                      {widget.items.map((item: any) => (
+                        <Card
+                          key={item.id}
+                          className="group overflow-hidden border-0 hover:shadow-md transition-all duration-300"
+                          style={{ borderRadius: 0 }}
+                        >
+                          <div className="relative">
+                            <div
+                              className="w-full h-[340px] overflow-hidden rounded-none"
+                              onClick={() => {
+                                sendEngagement(
+                                  item.slotId,
+                                  state.dyid,
+                                  state.cookies.dyid_server,
+                                  state.cookies.dyjsession,
+                                  state.apiKey,
+                                  addDebugLog,
+                                  state.region,
+                                )
+                                window.open(item.url, "_blank")
+                              }}
+                            >
+                              <Image
+                                src={item.image || "/placeholder.svg"}
+                                alt={item.name}
+                                width={250}
+                                height={340}
+                                className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+                              />
+                            </div>
+
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                              <div className="flex flex-col space-y-1">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="bg-white text-black hover:bg-gray-100 text-xs px-2 py-1 h-auto"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    const contextProduct = {
+                                      name: item.name,
+                                      brand: item.brand || "Unknown Brand",
+                                      price: item.price,
+                                      image: item.image,
+                                    }
+                                    const displayPrompt = "Shop The Style"
+                                    const actualPrompt = `Please help me find a total look for this item: ${item.brand || "Unknown Brand"} ${item.name} ${state.currencySymbol}${item.price}`
+
+                                    const newHistory = [
+                                      ...state.chatHistory,
+                                      { type: "user", message: actualPrompt, timestamp: new Date() },
+                                    ]
+
+                                    updateState({
+                                      queryText: actualPrompt,
+                                      originalQuery: actualPrompt,
+                                      page: 1,
+                                      searchType: "ai",
+                                      aiMode: true,
+                                      hasSearched: true,
+                                      chatHistory: newHistory,
+                                      contextProduct: contextProduct,
+                                      shopTheStyleDisplay: displayPrompt,
+                                    })
+                                    performDirectAISearch(actualPrompt)
+                                  }}
+                                >
+                                  <svg
+                                    className="h-3 w-3 mr-1"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                                      fill="currentColor"
+                                    />
+                                    <path
+                                      d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
+                                      fill="currentColor"
+                                    />
+                                    <path
+                                      d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z"
+                                      fill="currentColor"
+                                    />
+                                  </svg>
+                                  Shop the style
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="bg-white text-black hover:bg-gray-100 text-xs px-2 py-1 h-auto"
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    try {
+                                      const response = await fetch(item.image)
+                                      const blob = await response.blob()
+                                      const reader = new FileReader()
+                                      reader.onloadend = () => {
+                                        const base64 = reader.result?.toString().split(",")[1]
+                                        if (base64) {
+                                          handleVisualSearch(base64)
+                                        }
+                                      }
+                                      reader.readAsDataURL(blob)
+                                    } catch (error) {
+                                      console.error("Error converting image to base64:", error)
+                                    }
+                                  }}
+                                >
+                                  <Search className="h-3 w-3 mr-1" />
+                                  Similar style
+                                </Button>
+                              </div>
+                            </div>
+
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="absolute top-2 right-2 p-1 bg-white bg-opacity-80 hover:bg-opacity-100 h-auto w-auto"
+                              onClick={() => toggleFavorite(Number(item.id.split("-")[1]))}
+                            >
+                              <Heart
+                                className={`h-3 w-3 ${favorites.includes(Number(item.id.split("-")[1])) ? "fill-red-500 text-red-500" : "text-gray-600"}`}
+                              />
+                            </Button>
+                          </div>
+
+                          <CardContent className="p-3">
+                            <div className="space-y-2">
+                              <div>
+                                <h3
+                                  className="font-medium text-gray-900 line-clamp-2 text-sm cursor-pointer hover:underline"
+                                  onClick={() => {
+                                    sendEngagement(
+                                      item.slotId,
+                                      state.dyid,
+                                      state.cookies.dyid_server,
+                                      state.cookies.dyjsession,
+                                      state.apiKey,
+                                      addDebugLog,
+                                      state.region,
+                                    )
+                                    window.open(item.url, "_blank")
+                                  }}
+                                >
+                                  {item.name}
+                                </h3>
+                              </div>
+
+                              <div
+                                className="flex items-center space-x-2 cursor-pointer"
+                                onClick={() => {
+                                  sendEngagement(
+                                    item.slotId,
+                                    state.dyid,
+                                    state.cookies.dyid_server,
+                                    state.cookies.dyjsession,
+                                    state.apiKey,
+                                    addDebugLog,
+                                    state.region,
+                                  )
+                                  window.open(item.url, "_blank")
+                                }}
+                              >
+                                <span className="font-semibold text-base">
+                                  {state.currencySymbol}
+                                  {item.price}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {state.aiMode && (
+        <div className="fixed bottom-0 left-0 right-0 w-full bg-transparent border-t-0 z-30">
+          <div className="w-full rounded-t-[2rem] shadow-lg border-gray-200 p-6 border-2 bg-slate-50 py-3.5">
+            <div className="max-w-3xl mx-auto">
+              <div className="relative bg-white rounded-3xl shadow-sm border border-gray-200 p-4 py-2.5">
+                <div className="w-full mb-3">
+                  <input
+                    type="text"
+                    placeholder="Ask a follow up question..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && searchQuery.trim()) {
+                        updateState({ contextProduct: null, shopTheStyleDisplay: undefined })
+                        performDirectAISearch(searchQuery.trim())
+                        setSearchQuery("")
+                      }
+                    }}
+                    className="w-full text-base bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 outline-none placeholder:text-gray-400"
+                    style={{ fontSize: "16px" }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="flex-shrink-0"
+                    >
+                      <g clipPath="url(#clip0_4082_5186_bottom)">
+                        <path
+                          d="M11.6757 9.81054C8.73958 9.81054 6.35089 7.42177 6.35089 4.48562C6.35089 2.62899 7.30664 0.992133 8.75134 0.0388074C8.50309 0.0155936 8.25193 0.00238037 7.99762 0.00238037C3.58066 0.00238037 0 3.58304 0 8C0 12.417 3.58066 16 7.99762 16C7.74331 16 7.49215 15.987 7.24391 15.9638C8.68861 15.0104 9.64436 13.3736 9.64436 11.517C9.64436 8.58087 7.25567 6.19209 4.3195 6.19209C2.46287 6.19209 0.826018 7.14784 -0.127308 8.59254C-0.150522 8.34429 -0.163735 8.09313 -0.163735 7.83882C-0.163735 3.42186 3.41692 -0.158813 7.8339 -0.158813C12.2509 -0.158813 15.8315 3.42186 15.8315 7.83882C15.8315 8.17203 15.8142 8.50106 15.7809 8.82591C13.9699 8.97903 12.5605 10.2163 12.1968 11.8531C11.9928 10.9421 11.2373 10.2223 10.2992 10.0359C10.6629 9.30544 10.8669 8.47862 10.8669 7.59926C10.8669 4.66311 8.47817 2.27432 5.54202 2.27432C4.66266 2.27432 3.83584 2.47836 3.10537 2.84204C2.91898 1.90389 2.19909 1.14838 1.28811 0.944342C2.92496 0.390675 4.70316 0.0838928 6.5598 0.0838928C11.8128 0.0838928 16.0762 4.34731 16.0762 9.60028C16.0762 11.457 15.5226 13.2352 14.969 14.8721Z"
+                          fill="currentColor"
+                        />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_4082_5186_bottom">
+                          <rect width="16" height="16" fill="white" />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                    <span className="text-xs text-gray-500">Shopping Muse</span>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={handleAISearch}
+                    disabled={!searchQuery.trim() || state.loading}
+                    className="rounded-full bg-black text-white hover:bg-gray-800 px-4 h-8"
+                  >
+                    {state.loading ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M7.99999 1.33334V14.6667M7.99999 14.6667L14.6667 8.00001M7.99999 14.6667L1.33333 8.00001"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
   )
 }
-</div>
