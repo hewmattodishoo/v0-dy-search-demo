@@ -669,621 +669,615 @@ export default function Component() {
   }
 
   return (
-    // Use gradient background for the main container
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
-        {/* Header - Enhanced for AI Mode */}
-        <div className="sticky top-0 z-20 border-b-2 rounded-b-3xl bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between py-6 lg:px-2.5">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                onClick={handleBackToWelcome}
-                className="flex items-center gap-2 px-3 py-2 h-auto hover:bg-gray-100 rounded-lg bg-transparent"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span className="text-sm font-medium">Return</span>
-              </Button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+      {/* Header - Enhanced for AI Mode */}
+      <div className="sticky top-0 z-20 border-b-2 rounded-b-3xl bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between py-6 lg:px-2.5">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={handleBackToWelcome}
+              className="flex items-center gap-2 px-3 py-2 h-auto hover:bg-gray-100 rounded-lg bg-transparent"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="text-sm font-medium">Return</span>
+            </Button>
 
-              <div className="relative flex items-center gap-2">
-                <VisualSearchUpload
-                  onImageUpload={(base64) => {
-                    handleVisualSearch(base64)
+            <div className="relative flex items-center gap-2">
+              <VisualSearchUpload
+                onImageUpload={(base64) => {
+                  handleVisualSearch(base64)
+                }}
+              />
+              <div className="relative flex items-center">
+                <AutocompleteSearch
+                  onSearch={(searchTerm) => {
+                    setIsVisualSearchActive(false) // Reset visual search state when doing text search
+                    if (containsAITriggerWords(searchTerm)) {
+                      updateState({
+                        queryText: searchTerm,
+                        originalQuery: searchTerm,
+                        page: 1,
+                        searchType: "ai",
+                        aiMode: true,
+                        hasSearched: true,
+                        contextProduct: null,
+                        shopTheStyleDisplay: undefined,
+                      })
+                      performDirectAISearch(searchTerm.trim())
+                    } else {
+                      updateState({
+                        queryText: searchTerm.trim(),
+                        originalQuery: searchTerm.trim(),
+                        page: 1,
+                        searchType: "text",
+                        aiMode: false,
+                        loading: true,
+                        hasSearched: true,
+                        isWarming: false,
+                      })
+                    }
                   }}
+                  placeholder="Search products..."
+                  className="w-96"
+                  region={state.region}
+                  apiKey={state.apiKey}
                 />
-                <div className="relative flex items-center">
-                  <AutocompleteSearch
-                    onSearch={(searchTerm) => {
-                      setIsVisualSearchActive(false) // Reset visual search state when doing text search
-                      if (containsAITriggerWords(searchTerm)) {
-                        updateState({
-                          queryText: searchTerm,
-                          originalQuery: searchTerm,
-                          page: 1,
-                          searchType: "ai",
-                          aiMode: true,
-                          hasSearched: true,
-                          contextProduct: null,
-                          shopTheStyleDisplay: undefined,
-                        })
-                        performDirectAISearch(searchTerm.trim())
-                      } else {
-                        updateState({
-                          queryText: searchTerm.trim(),
-                          originalQuery: searchTerm.trim(),
-                          page: 1,
-                          searchType: "text",
-                          aiMode: false,
-                          loading: true,
-                          hasSearched: true,
-                          isWarming: false,
-                        })
-                      }
-                    }}
-                    placeholder="Search products..."
-                    className="w-96"
-                    region={state.region}
-                    apiKey={state.apiKey}
-                  />
-                </div>
               </div>
             </div>
-
-            {state.aiMode && state.conversationTurns.length > 0 && (
-              <div className="flex items-center gap-3">
-                <div className="rounded-full rounded-tr-none px-4 py-2 max-w-xs text-slate-200 bg-slate-200 overflow-hidden">
-                  <span className="text-sm font-medium text-slate-700 truncate block">
-                    {(() => {
-                      const message = currentTurn?.displayMessage || currentTurn?.userMessage || "Search Results"
-                      return message.length > 50 ? `${message.substring(0, 50)}...` : message
-                    })()}
-                  </span>
-                </div>
-
-                <div className="rounded-full flex items-center justify-center flex-shrink-0 bg-slate-600 pb-0 mb-3.5 pl-0 ml-[-9px] w-6 h-6">
-                  <span className="text-white text-sm font-semibold">U</span>
-                </div>
-
-                <div className="flex items-center space-x-1">
-                  <Button
-                    variant="ghost"
-                    className="h-8 w-8 p-0 hover:bg-gray-100"
-                    disabled={!canNavigatePrevious()}
-                    onClick={navigatePrevious}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    className="h-8 w-8 p-0 hover:bg-gray-100"
-                    disabled={!canNavigateNext()}
-                    onClick={navigateNext}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 hover:bg-gray-100"
-                  onClick={() => setShowTrafficGenerator(true)}
-                  title="Traffic Generator"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-
-            {!state.aiMode && (
-              <div className="flex items-center gap-2">
-                {state.searchType === "text" ? (
-                  <span className="text-sm font-medium text-gray-700">
-                    Results for "{state.spellCheckedQuery || state.queryText}"
-                  </span>
-                ) : state.searchType === "visual" && state.visualSearchImage ? (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-700">Visual Search</span>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="w-6 h-6 rounded border border-gray-200 overflow-hidden cursor-pointer">
-                            <Image
-                              src={`data:image/jpeg;base64,${state.visualSearchImage}`}
-                              alt="Search image"
-                              width={24}
-                              height={24}
-                              className="object-cover w-full h-full"
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="p-0 overflow-hidden">
-                          <div className="w-48 h-48 relative">
-                            <Image
-                              src={`data:image/jpeg;base64,${state.visualSearchImage}`}
-                              alt="Search image preview"
-                              fill
-                              className="object-contain"
-                            />
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                ) : (
-                  <span className="text-sm font-medium text-gray-700">Search Results</span>
-                )}
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 hover:bg-gray-100"
-                  onClick={() => setShowTrafficGenerator(true)}
-                  title="Traffic Generator"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* Main Content Area */}
-        <div className="w-full">
-          {state.aiMode && (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-2.5 py-4 space-y-6">
-              {state.loading && (
-                <div className="fixed inset-0 flex items-center justify-center bg-white z-40">
-                  <div className="flex flex-col items-center gap-6">
-                    <div className="relative">
-                      <svg
-                        className="w-16 h-16 text-gray-300"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                          fill="currentColor"
-                          className="animate-pulse"
-                          style={{ animationDelay: "0ms", animationDuration: "2s" }}
-                        />
-                        <path
-                          d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
-                          fill="currentColor"
-                          className="animate-pulse"
-                          style={{ animationDelay: "400ms", animationDuration: "2s" }}
-                        />
-                        <path
-                          d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z"
-                          fill="currentColor"
-                          className="animate-pulse"
-                          style={{ animationDelay: "800ms", animationDuration: "2s" }}
-                        />
-                      </svg>
-                    </div>
+          {state.aiMode && state.conversationTurns.length > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="rounded-full rounded-tr-none px-4 py-2 max-w-xs text-slate-200 bg-slate-200 overflow-hidden">
+                <span className="text-sm font-medium text-slate-700 truncate block">
+                  {(() => {
+                    const message = currentTurn?.displayMessage || currentTurn?.userMessage || "Search Results"
+                    return message.length > 50 ? `${message.substring(0, 50)}...` : message
+                  })()}
+                </span>
+              </div>
 
-                    <div className="space-y-2">
-                      <p className="text-lg font-light text-gray-700">Your muse, your way.</p>
-                      <div className="flex items-center justify-center gap-1">
-                        <div
-                          className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0ms" }}
-                        ></div>
-                        <div
-                          className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "150ms" }}
-                        ></div>
-                        <div
-                          className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "300ms" }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="rounded-full flex items-center justify-center flex-shrink-0 bg-slate-600 pb-0 mb-3.5 pl-0 ml-[-9px] w-6 h-6">
+                <span className="text-white text-sm font-semibold">U</span>
+              </div>
 
-              {currentTurn && !state.loading && (
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg
-                        className="h-4 w-4 text-gray-600"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                          fill="currentColor"
-                        />
-                        <path
-                          d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
-                          fill="currentColor"
-                        />
-                        <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor" />
-                      </svg>
-                    </div>
-                    <div className="bg-gray-100 text-gray-800 rounded-lg p-3 text-sm max-w-[40%]">
-                      <div className="space-y-3">
-                        <div>{currentTurn.assistantMessage}</div>
+              <div className="flex items-center space-x-1">
+                <Button
+                  variant="ghost"
+                  className="h-8 w-8 p-0 hover:bg-gray-100"
+                  disabled={!canNavigatePrevious()}
+                  onClick={navigatePrevious}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
 
-                        {currentTurn.contextProducts.length > 0 && state.contextProduct && (
-                          <div className="border-t border-gray-200 pt-3">
-                            <p className="text-xs text-gray-600 mb-3">Showing matching styles to:</p>
-                            <div className="grid grid-cols-1 gap-3">
-                              <div className="flex items-center space-x-3 bg-white rounded-lg p-2">
-                                <div className="w-24 h-32 flex-shrink-0">
-                                  <Image
-                                    src={state.contextProduct.image || "/placeholder.svg"}
-                                    alt={state.contextProduct.name}
-                                    width={96}
-                                    height={128}
-                                    className="object-cover w-full h-full rounded"
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs text-gray-500 uppercase tracking-wide">
-                                    {state.contextProduct.brand}
-                                  </p>
-                                  <h4 className="font-medium text-gray-900 text-xs line-clamp-2">
-                                    {state.contextProduct.name}
-                                  </h4>
-                                  <p className="font-semibold text-xs">
-                                    {state.currencySymbol}
-                                    {state.contextProduct.price}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+                <Button
+                  variant="ghost"
+                  className="h-8 w-8 p-0 hover:bg-gray-100"
+                  disabled={!canNavigateNext()}
+                  onClick={navigateNext}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:bg-gray-100"
+                onClick={() => setShowTrafficGenerator(true)}
+                title="Traffic Generator"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
             </div>
           )}
 
           {!state.aiMode && (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              <div className="mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                <div>
-                  {!state.loading && wasSpellCorrected && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Search for "
-                      <button onClick={searchWithOriginalQuery} className="text-blue-600 hover:underline cursor-pointer">
-                        {state.originalQuery}
-                      </button>
-                      " instead
-                    </p>
-                  )}
+            <div className="flex items-center gap-2">
+              {state.searchType === "text" ? (
+                <span className="text-sm font-medium text-gray-700">
+                  Results for "{state.spellCheckedQuery || state.queryText}"
+                </span>
+              ) : state.searchType === "visual" && state.visualSearchImage ? (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700">Visual Search</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-6 h-6 rounded border border-gray-200 overflow-hidden cursor-pointer">
+                          <Image
+                            src={`data:image/jpeg;base64,${state.visualSearchImage}`}
+                            alt="Search image"
+                            width={24}
+                            height={24}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="p-0 overflow-hidden">
+                        <div className="w-48 h-48 relative">
+                          <Image
+                            src={`data:image/jpeg;base64,${state.visualSearchImage}`}
+                            alt="Search image preview"
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <Heart className="h-4 w-4" />
-                  <span>{favorites.length} favorites</span>
+              ) : (
+                <span className="text-sm font-medium text-gray-700">Search Results</span>
+              )}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:bg-gray-100"
+                onClick={() => setShowTrafficGenerator(true)}
+                title="Traffic Generator"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="w-full">
+        {state.aiMode && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-2.5 py-4 space-y-6">
+            {state.loading && (
+              <div className="fixed inset-0 flex items-center justify-center bg-white z-40">
+                <div className="flex flex-col items-center gap-6">
+                  <div className="relative">
+                    <svg
+                      className="w-16 h-16 text-gray-300"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                        fill="currentColor"
+                        className="animate-pulse"
+                        style={{ animationDelay: "0ms", animationDuration: "2s" }}
+                      />
+                      <path
+                        d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
+                        fill="currentColor"
+                        className="animate-pulse"
+                        style={{ animationDelay: "400ms", animationDuration: "2s" }}
+                      />
+                      <path
+                        d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z"
+                        fill="currentColor"
+                        className="animate-pulse"
+                        style={{ animationDelay: "800ms", animationDuration: "2s" }}
+                      />
+                    </svg>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-lg font-light text-gray-700">Your muse, your way.</p>
+                    <div className="flex items-center justify-center gap-1">
+                      <div
+                        className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      ></div>
+                      <div
+                        className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      ></div>
+                      <div
+                        className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      ></div>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="flex gap-8">
-                {(state.facets.length > 0 || state.searchType === "text") && (
-                  <div className="w-64 flex-none space-y-4">
-                    <h2 className="text-sm tracking-wider text-gray-600 font-semibold mb-5">REFINE BY</h2>
-
-                    <FacetSidebar
-                      facets={state.facets}
-                      filters={state.selected}
-                      expandedFacets={state.expanded}
-                      onToggleFacet={handleFacetToggle}
-                      onToggleExpansion={(field) =>
-                        updateState({
-                          expanded: { ...state.expanded, [field]: !state.expanded[field] },
-                        })
-                      }
-                      setPriceRange={setPriceRange}
-                      priceBounds={state.priceBounds}
-                      priceFrom={state.priceFrom}
-                      priceTo={state.priceTo}
-                    />
-                  </div>
-                )}
-
-                {state.debugMode && state.facets.length >= 0 && (
-                  <div className="mb-4 p-2 bg-yellow-100 text-xs">
-                    <strong>Debug - Facets:</strong> {state.facets.length} facets found
-                    {state.facets.map((f, i) => (
-                      <div key={i}>
-                        • {f.displayName || f.column} ({f.values?.length || 0} values)
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex-1">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-gray-600">{state.total.toLocaleString()} results</span>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <select
-                        value={state.sort}
-                        onChange={(e) => updateState({ sort: e.target.value, page: 1 })}
-                        className="text-sm border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 border-0"
-                      >
-                        <option value="relevance">Relevance</option>
-                        <option value="price_asc">Price: Low to High</option>
-                        <option value="price_desc">Price: High to Low</option>
-                        <option value="popularity_desc">Most Popular</option>
-                      </select>
-
-                      <div className="flex border-gray-300 rounded border-0">
-                        <button
-                          onClick={() => setViewMode("grid")}
-                          className={`px-3 py-1 text-sm flex items-center gap-1 ${viewMode === "grid" ? "bg-gray-100" : "hover:bg-gray-50"}`}
-                        >
-                          <Grid3X3 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => setViewMode("list")}
-                          className={`px-3 py-1 text-sm border-l border-gray-300 flex items-center gap-1 ${
-                            viewMode === "list" ? "bg-gray-100" : "hover:bg-gray-50"
-                          }`}
-                        >
-                          <List className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {state.loading && state.page === 1 ? (
-                    <div className="text-center py-12">
-                      <div className="flex flex-col items-center gap-4">
-                        <LoadingSpinner size="lg" />
-                        {state.isWarming && <p className="text-gray-500 text-sm">Warming up server...</p>}
-                      </div>
-                    </div>
-                  ) : fashionItems.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-gray-500 text-sm mb-4">
-                        No results found.{" "}
-                        <Button
-                          variant="link"
-                          onClick={handleSearchAgain}
-                          className="p-0 h-auto text-sm underline"
-                          disabled={state.isWarming}
-                        >
-                          {state.isWarming ? "Warming up..." : "Search again"}
-                        </Button>
-                      </p>
-                    </div>
-                  ) : (
-                    <div
-                      className={
-                        viewMode === "grid"
-                          ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
-                          : "space-y-4"
-                      }
+            {currentTurn && !state.loading && (
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="h-4 w-4 text-gray-600"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      {fashionItems.map((item) => (
-                        <Card
-                          key={item.id}
-                          className={`group overflow-hidden border-0 hover:shadow-md transition-all duration-300 ${
-                            viewMode === "list" ? "flex flex-row" : ""
-                          }`}
-                          style={{ borderRadius: 0 }}
-                        >
-                          <div className={`relative ${viewMode === "list" ? "w-24 sm:w-32 flex-shrink-0" : ""}`}>
-                            <div
-                              className={`${
-                                viewMode === "list" ? "w-full h-full" : "w-full h-[340px]"
-                              } overflow-hidden rounded-none`}
-                              onClick={() => {
-                                sendEngagement(
-                                  item.slotId,
-                                  state.dyid,
-                                  state.cookies.dyid_server,
-                                  state.cookies.dyjsession,
-                                  state.apiKey,
-                                  addDebugLog,
-                                  state.region,
-                                )
-                                window.open(item.url, "_blank")
-                              }}
-                            >
-                              <Image
-                                src={item.image || "/placeholder.svg"}
-                                alt={item.name}
-                                width={250}
-                                height={340}
-                                className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 cursor-pointer"
-                              />
-                            </div>
+                      <path
+                        d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
+                        fill="currentColor"
+                      />
+                      <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor" />
+                    </svg>
+                  </div>
+                  <div className="bg-gray-100 text-gray-800 rounded-lg p-3 text-sm max-w-[40%]">
+                    <div className="space-y-3">
+                      <div>{currentTurn.assistantMessage}</div>
 
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                              <div className="flex flex-col space-y-1">
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="bg-white text-black hover:bg-gray-100 text-xs px-2 py-1 h-auto"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    const contextProduct = {
-                                      name: item.name,
-                                      brand: item.brand || "Unknown Brand",
-                                      price: item.price,
-                                      image: item.image,
-                                    }
-                                    const displayPrompt = "Shop The Style"
-                                    const actualPrompt = `Please help me find a total look for this item: ${item.brand || "Unknown Brand"} ${item.name} ${state.currencySymbol}${item.price}`
-
-                                    const newHistory = [
-                                      ...state.chatHistory,
-                                      { type: "user", message: actualPrompt, timestamp: new Date() },
-                                    ]
-
-                                    updateState({
-                                      queryText: actualPrompt,
-                                      originalQuery: actualPrompt,
-                                      page: 1,
-                                      searchType: "ai",
-                                      aiMode: true,
-                                      hasSearched: true,
-                                      chatHistory: newHistory,
-                                      contextProduct: contextProduct,
-                                      shopTheStyleDisplay: displayPrompt,
-                                    })
-                                    performDirectAISearch(actualPrompt)
-                                  }}
-                                >
-                                  <svg
-                                    className="h-3 w-3 mr-1"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path
-                                      d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                                      fill="currentColor"
-                                    />
-                                    <path
-                                      d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
-                                      fill="currentColor"
-                                    />
-                                    <path
-                                      d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z"
-                                      fill="currentColor"
-                                    />
-                                  </svg>
-                                  Shop the style
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="bg-white text-black hover:bg-gray-100 text-xs px-2 py-1 h-auto"
-                                  onClick={async (e) => {
-                                    e.stopPropagation()
-                                    try {
-                                      const response = await fetch(item.image)
-                                      const blob = await response.blob()
-                                      const reader = new FileReader()
-                                      reader.onloadend = () => {
-                                        const base64 = reader.result?.toString().split(",")[1]
-                                        if (base64) {
-                                          handleVisualSearch(base64)
-                                        }
-                                      }
-                                      reader.readAsDataURL(blob)
-                                    } catch (error) {
-                                      console.error("Error converting image to base64:", error)
-                                    }
-                                  }}
-                                >
-                                  <Search className="h-3 w-3 mr-1" />
-                                  Similar style
-                                </Button>
+                      {currentTurn.contextProducts.length > 0 && state.contextProduct && (
+                        <div className="border-t border-gray-200 pt-3">
+                          <p className="text-xs text-gray-600 mb-3">Showing matching styles to:</p>
+                          <div className="grid grid-cols-1 gap-3">
+                            <div className="flex items-center space-x-3 bg-white rounded-lg p-2">
+                              <div className="w-24 h-32 flex-shrink-0">
+                                <Image
+                                  src={state.contextProduct.image || "/placeholder.svg"}
+                                  alt={state.contextProduct.name}
+                                  width={96}
+                                  height={128}
+                                  className="object-cover w-full h-full rounded"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                                  {state.contextProduct.brand}
+                                </p>
+                                <h4 className="font-medium text-gray-900 text-xs line-clamp-2">
+                                  {state.contextProduct.name}
+                                </h4>
+                                <p className="font-semibold text-xs">
+                                  {state.currencySymbol}
+                                  {state.contextProduct.price}
+                                </p>
                               </div>
                             </div>
                           </div>
-
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="absolute top-2 right-2 p-1 bg-white bg-opacity-80 hover:bg-opacity-100 h-auto w-auto"
-                            onClick={() => toggleFavorite(item.id)}
-                          >
-                            <Heart
-                              className={`h-3 w-3 ${favorites.includes(item.id) ? "fill-red-500 text-red-500" : "text-gray-600"}`}
-                            />
-                          </Button>
                         </div>
-\
-                        <CardContent className={\`p-3 ${viewMode === "list" ? "flex-1\" : "\"}`}>\
-                          <div className="space-y-2\">\
-                            <div>\
-                              <h3\
-                                className=\"font-medium text-gray-900 line-clamp-2 text-sm cursor-pointer hover:underline"\
-                                onClick={() => {\
-                                  sendEngagement(\
-                                    item.slotId,\
-                                    state.dyid,\
-                                    state.cookies.dyid_server,\
-                                    state.cookies.dyjsession,\
-                                    state.apiKey,
-                                    addDebugLog,\
-                                    state.region,
-                                  )\
-                                  window.open(item.url, \"_blank\")\
-                                }}\
-                              >\
-                                {item.name}\
-                              </h3>\
-                            </div>
-\
-                            <div\
-                              className="flex items-center space-x-2 cursor-pointer"\
-                              onClick={() => {\
-                                sendEngagement(
-                                  item.slotId,
-                                  state.dyid,
-                                  state.cookies.dyid_server,
-                                  state.cookies.dyjsession,
-                                  state.apiKey,
-                                  addDebugLog,
-                                  state.region,
-                                )
-                                window.open(item.url, "_blank")
-                              }}
-                            >
-                              <span className="font-semibold text-base">
-                                {state.currencySymbol}
-                                {item.price}
-                              </span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-
-                {state.isLoadingMore && fashionItems.length > 0 && (
-                  <div className="mt-8 text-center py-4">
-                    <div className="flex flex-col items-center gap-2">
-                      <LoadingSpinner size="md" />
-                      <p className="text-gray-500 text-sm">Loading more results...</p>
+                      )}
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!state.aiMode && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <div>
+                {!state.loading && wasSpellCorrected && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Search for "
+                    <button onClick={searchWithOriginalQuery} className="text-blue-600 hover:underline cursor-pointer">
+                      {state.originalQuery}
+                    </button>
+                    " instead
+                  </p>
                 )}
-
-                {fashionItems.length > 0 &&
-                  state.searchType === "text" &&
-                  !state.isLoadingMore &&
-                  !state.loading &&
-                  state.page < Math.ceil(state.total / state.itemsPerPage) && (
-                    <div ref={loadMoreRef} className="mt-8 text-center py-4">
-                      <p className="text-xs text-gray-400">Scroll to load more...</p>
-                    </div>
-                  )}
-
-                {fashionItems.length > 0 &&
-                  state.searchType === "text" &&
-                  state.page >= Math.ceil(state.total / state.itemsPerPage) && (
-                    <div className="mt-8 text-center">
-                      <p className="text-sm text-gray-500">You've reached the end of the results</p>
-                    </div>
-                  )}
-
-                {fashionItems.length > 0 && state.searchType === "visual" && <div className="mt-8 text-center"></div>}
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <Heart className="h-4 w-4" />
+                <span>{favorites.length} favorites</span>
               </div>
             </div>
-  )
+
+            <div className="flex gap-8">
+              {(state.facets.length > 0 || state.searchType === "text") && (
+                <div className="w-64 flex-none space-y-4">
+                  <h2 className="text-sm tracking-wider text-gray-600 font-semibold mb-5">REFINE BY</h2>
+
+                  <FacetSidebar
+                    facets={state.facets}
+                    filters={state.selected}
+                    expandedFacets={state.expanded}
+                    onToggleFacet={handleFacetToggle}
+                    onToggleExpansion={(field) =>
+                      updateState({
+                        expanded: { ...state.expanded, [field]: !state.expanded[field] },
+                      })
+                    }
+                    setPriceRange={setPriceRange}
+                    priceBounds={state.priceBounds}
+                    priceFrom={state.priceFrom}
+                    priceTo={state.priceTo}
+                  />
+                </div>
+              )}
+
+              {state.debugMode && state.facets.length >= 0 && (
+                <div className="mb-4 p-2 bg-yellow-100 text-xs">
+                  <strong>Debug - Facets:</strong> {state.facets.length} facets found
+                  {state.facets.map((f, i) => (
+                    <div key={i}>
+                      • {f.displayName || f.column} ({f.values?.length || 0} values)
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex-1">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-600">{state.total.toLocaleString()} results</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <select
+                      value={state.sort}
+                      onChange={(e) => updateState({ sort: e.target.value, page: 1 })}
+                      className="text-sm border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 border-0"
+                    >
+                      <option value="relevance">Relevance</option>
+                      <option value="price_asc">Price: Low to High</option>
+                      <option value="price_desc">Price: High to Low</option>
+                      <option value="popularity_desc">Most Popular</option>
+                    </select>
+
+                    <div className="flex border-gray-300 rounded border-0">
+                      <button
+                        onClick={() => setViewMode("grid")}
+                        className={`px-3 py-1 text-sm flex items-center gap-1 ${viewMode === "grid" ? "bg-gray-100" : "hover:bg-gray-50"}`}
+                      >
+                        <Grid3X3 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode("list")}
+                        className={`px-3 py-1 text-sm border-l border-gray-300 flex items-center gap-1 ${
+                          viewMode === "list" ? "bg-gray-100" : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <List className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {state.loading && state.page === 1 ? (
+                  <div className="text-center py-12">
+                    <div className="flex flex-col items-center gap-4">
+                      <LoadingSpinner size="lg" />
+                      {state.isWarming && <p className="text-gray-500 text-sm">Warming up server...</p>}
+                    </div>
+                  </div>
+                ) : fashionItems.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 text-sm mb-4">
+                      No results found.{" "}
+                      <Button
+                        variant="link"
+                        onClick={handleSearchAgain}
+                        className="p-0 h-auto text-sm underline"
+                        disabled={state.isWarming}
+                      >
+                        {state.isWarming ? "Warming up..." : "Search again"}
+                      </Button>
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    className={
+                      viewMode === "grid"
+                        ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
+                        : "space-y-4"
+                    }
+                  >
+                    {fashionItems.map((item) => (
+                      <Card
+                        key={item.id}
+                        className={`group overflow-hidden border-0 hover:shadow-md transition-all duration-300 ${
+                          viewMode === "list" ? "flex flex-row" : ""
+                        }`}
+                        style={{ borderRadius: 0 }}
+                      >
+                        <div className={`relative ${viewMode === "list" ? "w-24 sm:w-32 flex-shrink-0" : ""}`}>
+                          <div
+                            className={`${
+                              viewMode === "list" ? "w-full h-full" : "w-full h-[340px]"
+                            } overflow-hidden rounded-none`}
+                            onClick={() => {
+                              sendEngagement(
+                                item.slotId,
+                                state.dyid,
+                                state.cookies.dyid_server,
+                                state.cookies.dyjsession,
+                                state.apiKey,
+                                addDebugLog,
+                                state.region,
+                              )
+                              window.open(item.url, "_blank")
+                            }}
+                          >
+                            <Image
+                              src={item.image || "/placeholder.svg"}
+                              alt={item.name}
+                              width={250}
+                              height={340}
+                              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+                            />
+                          </div>
+
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <div className="flex flex-col space-y-1">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="bg-white text-black hover:bg-gray-100 text-xs px-2 py-1 h-auto"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  const contextProduct = {
+                                    name: item.name,
+                                    brand: item.brand || "Unknown Brand",
+                                    price: item.price,
+                                    image: item.image,
+                                  }
+                                  const displayPrompt = "Shop The Style"
+                                  const actualPrompt = `Please help me find a total look for this item: ${item.brand || "Unknown Brand"} ${item.name} ${state.currencySymbol}${item.price}`
+
+                                  const newHistory = [
+                                    ...state.chatHistory,
+                                    { type: "user", message: actualPrompt, timestamp: new Date() },
+                                  ]
+
+                                  updateState({
+                                    queryText: actualPrompt,
+                                    originalQuery: actualPrompt,
+                                    page: 1,
+                                    searchType: "ai",
+                                    aiMode: true,
+                                    hasSearched: true,
+                                    chatHistory: newHistory,
+                                    contextProduct: contextProduct,
+                                    shopTheStyleDisplay: displayPrompt,
+                                  })
+                                  performDirectAISearch(actualPrompt)
+                                }}
+                              >
+                                <svg
+                                  className="h-3 w-3 mr-1"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                                    fill="currentColor"
+                                  />
+                                  <path
+                                    d="M19 12L19.5 14.5L22 15L19.5 15.5L19 18L18.5 15.5L16 15L18.5 14.5L19 12Z"
+                                    fill="currentColor"
+                                  />
+                                  <path d="M5 6L5.5 8.5L8 9L5.5 9.5L5 12L4.5 9.5L2 9L4.5 8.5L5 6Z" fill="currentColor" />
+                                </svg>
+                                Shop the style
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="bg-white text-black hover:bg-gray-100 text-xs px-2 py-1 h-auto"
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  try {
+                                    const response = await fetch(item.image)
+                                    const blob = await response.blob()
+                                    const reader = new FileReader()
+                                    reader.onloadend = () => {
+                                      const base64 = reader.result?.toString().split(",")[1]
+                                      if (base64) {
+                                        handleVisualSearch(base64)
+                                      }
+                                    }
+                                    reader.readAsDataURL(blob)
+                                  } catch (error) {
+                                    console.error("Error converting image to base64:", error)
+                                  }
+                                }}
+                              >
+                                <Search className="h-3 w-3 mr-1" />
+                                Similar style
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="absolute top-2 right-2 p-1 bg-white bg-opacity-80 hover:bg-opacity-100 h-auto w-auto"
+                          onClick={() => toggleFavorite(item.id)}
+                        >
+                          <Heart
+                            className={`h-3 w-3 ${favorites.includes(item.id) ? "fill-red-500 text-red-500" : "text-gray-600"}`}
+                          />
+                        </Button>
+                      </Card>
+\
+                      <CardContent className={\`p-3 ${viewMode === "list" ? "flex-1\" : "\"}`}>\
+                        <div className="space-y-2\">\
+                          <div>\
+                            <h3\
+                              className=\"font-medium text-gray-900 line-clamp-2 text-sm cursor-pointer hover:underline"\
+                              onClick={() => {\
+                                sendEngagement(\
+                                  item.slotId,\
+                                  state.dyid,\
+                                  state.cookies.dyid_server,\
+                                  state.cookies.dyjsession,\
+                                  state.apiKey,
+                                  addDebugLog,\
+                                  state.region,
+                                )\
+                                window.open(item.url, \"_blank\")\
+                              }}\
+                            >\
+                              {item.name}\
+                            </h3>\
+                          </div>
+\
+                          <div\
+                            className="flex items-center space-x-2 cursor-pointer"\
+                            onClick={() => {\
+                              sendEngagement(
+                                item.slotId,
+                                state.dyid,
+                                state.cookies.dyid_server,
+                                state.cookies.dyjsession,
+                                state.apiKey,
+                                addDebugLog,
+                                state.region,
+                              )
+                              window.open(item.url, "_blank")
+                            }}
+                          >
+                            <span className="font-semibold text-base">
+                              {state.currencySymbol}
+                              {item.price}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {state.isLoadingMore && fashionItems.length > 0 && (
+                <div className="mt-8 text-center py-4">
+                  <div className="flex flex-col items-center gap-2">
+                    <LoadingSpinner size="md" />
+                    <p className="text-gray-500 text-sm">Loading more results...</p>
+                  </div>
+                </div>
+              )}
+
+              {fashionItems.length > 0 &&
+                state.searchType === "text" &&
+                !state.isLoadingMore &&
+                !state.loading &&
+                state.page < Math.ceil(state.total / state.itemsPerPage) && (
+                  <div ref={loadMoreRef} className="mt-8 text-center py-4">
+                    <p className="text-xs text-gray-400">Scroll to load more...</p>
+                  </div>
+                )}
+
+              {fashionItems.length > 0 &&
+                state.searchType === "text" &&
+                state.page >= Math.ceil(state.total / state.itemsPerPage) && (
+                  <div className="mt-8 text-center">
+                    <p className="text-sm text-gray-500">You've reached the end of the results</p>
+                  </div>
+                )}
+
+              {fashionItems.length > 0 && state.searchType === "visual" && <div className="mt-8 text-center"></div>}
+            </div>
+  </div>
+        )
 }
 </div>
-      </div>
 
 {
   state.aiMode && !state.loading && (
@@ -1485,5 +1479,3 @@ export default function Component() {
   )
 }
 </div>
-  )
-}
